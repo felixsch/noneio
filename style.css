@@ -1,0 +1,150 @@
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+
+}
+
+
+html {
+    height: 100%;
+    user-select: none;
+}
+
+a, a:active, a:link, a:visited {
+
+    color: #781905;
+}
+
+a:hover {
+    animation: blink 3s;
+    animation-iteration-count: infinite;
+}
+
+body {
+    font-family: 'serif';
+    font-size: 140%;
+    margin: 0 0;
+    padding: 0 0;
+
+    background-color: #1a1a1a;
+
+    /*background-color: #781905; */
+    color: #1a1a1a;
+
+    height: 100%;
+}
+
+
+#border {
+
+    background-color: #f6f5ee;
+    background-image: url('noise.png');
+    
+    width: 98%;
+    margin: 0 auto;
+    display: block;
+ } 
+
+#center {
+    width: 70%;
+    margin: 0 auto;
+}
+
+#logo {
+    width: 70%;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 1.5em;
+    color: #781905;
+}
+
+#logo img {
+    margin: 0 auto;
+
+}
+
+
+
+#head {
+    padding: 5% 0 10% 0;
+    text-align: center;
+    font-size:  0.8em;
+}
+
+#head a, #head a:active, #head a:visited, #head a:link {
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+#head a:hover {
+    text-decoration: underline;
+}
+
+ul {
+    margin: 0;
+    padding: 0;
+}
+
+#head li {
+    display: inline;
+    margin: 0 10px;
+}
+
+img {
+  max-height: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+
+/* blinking arrow */
+
+#arrow {
+    margin: 12% auto 7% auto;
+    animation: blink 3s;
+    animation-iteration-count: infinite;
+    outline: none;
+}
+
+.article {
+    font-size: 2em;
+    padding: 5% 0 0 0;
+}
+
+.article a, .article a:visited, .article a:link {
+    color: #1a1a1a;
+    text-decoration: none;
+
+    margin: 0;
+}
+.article p{
+    font-size: .4em;
+    font-style: italic;
+
+    color: #781905;
+
+}
+
+.article a:hover {
+    
+    animation: blink 3s;
+    animation-iteration-count: infinite;
+    text-decoration: underline;
+}
+
+
+#foot {
+    height: 200px;
+
+    }
+
+#fixed-right {
+    position: fixed;
+    bottom: 4px;
+    right: 2%;
+}
