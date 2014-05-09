@@ -27,7 +27,7 @@ a:hover {
 
 body {
     font-family: 'serif';
-    font-size: 140%;
+    font-size: 100%;
     margin: 0 0;
     padding: 0 0;
 
@@ -63,6 +63,11 @@ body {
     color: #781905;
 }
 
+#logo-post {
+    width: 20%;
+    margin: 0 auto;
+}
+
 #logo img {
     margin: 0 auto;
 
@@ -73,7 +78,7 @@ body {
 #head {
     padding: 5% 0 10% 0;
     text-align: center;
-    font-size:  0.8em;
+    font-size:  1.2em;
 }
 
 #head a, #head a:active, #head a:visited, #head a:link {
@@ -105,14 +110,14 @@ img {
 /* blinking arrow */
 
 #arrow {
-    margin: 12% auto 7% auto;
+    margin: 30vh auto 7% auto;
     animation: blink 3s;
     animation-iteration-count: infinite;
     outline: none;
 }
 
 .article {
-    font-size: 2em;
+    font-size: 3em;
     padding: 5% 0 0 0;
 }
 

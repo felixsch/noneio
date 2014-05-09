@@ -1,0 +1,12 @@
+<div id="logo">
+    <img src="/static/brain.svg" alt="brain!"></img>
+    <p>What ever comes to mind.</p>
+</div>
+
+$for(posts)$ 
+<div class="article">
+    <a href="$url$">$title$</a>
+    <p>$date$ under $tags$</p>
+</div>
+$endfor$
+
