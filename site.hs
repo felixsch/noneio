@@ -1,11 +1,13 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
+import System.IO
+import System.Directory
 import Control.Applicative
 import Data.Monoid
+import qualified Data.Map as M
 
 import Hakyll
 
-import System.IO
 
 
 main :: IO ()
@@ -39,16 +41,34 @@ main
     match "posts/*.md" $ do
         route $ setExtension ".html"
         compile $ pandocCompiler 
+            >>= saveSnapshot "posts"
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
             >>= loadAndApplyTemplate "templates/base.html" defaultContext
             >>= relativizeUrls
 
+    -- handle static pages
+    match (fromList staticPages) $ do
+        route idRoute
+        compile $ makeItem ""
+            >>= loadAndApplyTemplate "templates/base.html" (indexCtx tags)
+            >>= relativizeUrls
+
+    -- create index page
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
             >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
             >>= loadAndApplyTemplate "templates/base.html" (indexCtx tags)
             >>= relativizeUrls
+
+    -- create rss feed
+    create ["feed.xml"] $ do
+        route idRoute
+        compile $ loadAllSnapshots "posts/*" "posts"
+            >>= renderRss feedConfig defaultContext
+    where
+        staticPages = []
+
 
 compileTags :: Tags -> String -> Pattern -> Rules ()
 compileTags
@@ -81,3 +101,61 @@ config :: Configuration
 config 
     = defaultConfiguration
 
+feedConfig :: FeedConfiguration
+feedConfig
+    = FeedConfiguration 
+    { feedTitle         = "none.io - What ever comes to mind"
+    , feedDescription   = "Blog of felixsch"
+    , feedAuthorName    = "Felix S."
+    , feedAuthorEmail   = "felix@none.io"
+    , feedRoot          = "http://none.io"
+    }
+
+data Photo = Photo
+    { photoName :: Identifier
+    , photoDescription :: Maybe String
+    , photoThumbnail :: FilePath
+    , photoPath :: FilePath
+    } deriving (Show)
+
+instance Writable Photo where
+    write fp item = copyFile (photoPath $ itemBody item) fp
+
+data Gallery = Gallery
+    { galleryName :: Identifier
+    , galleryPhotos :: [Photo]
+    , galleryDependency :: Dependency
+    } deriving (Show)
+
+getGalleries :: MonadMetadata m => Identifier -> m [String]
+getGalleries
+    i = do
+    metadata <- getMetadata i
+    return $ maybe [] (map trim . splitAll ",") $ M.lookup "galleries" metadata
+
+buildGalleries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m [Gallery]
+buildGalleries
+    pattern make = do
+        matches <- getMatches pattern
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
