@@ -43,20 +43,29 @@ Cephenum et secutum iam occupat cernam.
 - Pugnat parentis dubioque sollertia serpit inquit
 
 ## Antris et caput
-
+``` haskell
+fac n = foldr (*) 1 [1..n]
+```
+~~~ {.haskell .numberLines}
+-- | Inefficient quicksort in haskell.
+qsort :: (Enum a) => [a] -> [a]
+qsort []     = []
+qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++
+               qsort (filter (>= x) xs) 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Veneno Silenus. O carmen dominum palearia luctusque iacet servavit pueri et
 candida nostras, o est felicior, silvas et.
-``` c
-    if (bridge.modem_exabyte(error(memory, app, delHard))) {
-        safe_rw(floating_directx_font, system_hypertext_manet, sdk + token);
-        sector_encoding += design;
-        interfaceData.menu(diskBlacklistSoa, big_nat - intellectualCamera,
-                444855);
-    }
-    icq = program;
-    var mini_output = -4;
-    restoreServerSamba(displaySslCmyk + matrixAutoresponder, dfs + -5, 5);
-    var memory = password_snippet_t;
+```
+if (bridge.modem_exabyte(error(memory, app, delHard))) {
+    safe_rw(floating_directx_font, system_hypertext_manet, sdk + token);
+    sector_encoding += design;
+    interfaceData.menu(diskBlacklistSoa, big_nat - intellectualCamera,
+            444855);
+}
+icq = program;
+var mini_output = -4;
+restoreServerSamba(displaySslCmyk + matrixAutoresponder, dfs + -5, 5);
+var memory = password_snippet_t;
 ```
 ## Iunguntur ferox
 

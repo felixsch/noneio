@@ -6,9 +6,10 @@ import System.FilePath
 import Control.Applicative
 import Data.Monoid
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 import qualified Text.Pandoc.Options as O
-
+import Text.Highlighting.Kate.Styles (pygments)
 import Hakyll
 
 main :: IO ()
@@ -46,7 +47,7 @@ main
     -- handle posts
     match "posts/*.md" $ do
         route $ setExtension ".html"
-        compile $ pandocCompiler 
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
             >>= saveSnapshot "posts"
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
             >>= loadAndApplyTemplate "templates/base.html" defaultContext
@@ -129,21 +130,13 @@ mathjax
       script = "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\" />"
         
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+pandocOptions :: O.WriterOptions
+pandocOptions = defaultHakyllWriterOptions
+    { O.writerHtml5 = True
+    , O.writerHtmlQTags = True
+    , O.writerSectionDivs = True
+    , O.writerTableOfContents = True
+    , O.writerHighlight = True
+    , O.writerHighlightStyle = pygments
+    , O.writerExtensions = O.githubMarkdownExtensions
+    }
