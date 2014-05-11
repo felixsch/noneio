@@ -1,7 +1,8 @@
 ---
 title: Fighting the evil - php
+description: moep
 gallery: first second
-tags: php evil
+tags: php, evil
 ---
 
 # Summum aequor in Pisenore locis Crantoris

@@ -1,6 +1,8 @@
 ---
 title: My First Posts
+description: My first post
 tags: Haskell 
+gallery: test
 ---
 Lore
 m markdownum feriente ore serum *virgam verbis*, meruere iugo humo! Chori
@@ -34,7 +36,6 @@ corrigit](http://www.youtube.com/watch?v=MghiBW3r65M) prosiluit Phaethon. Dum
 tela Euryte moenia illud. Aeacidae ora quondam tinguet ad feroces saltem
 agitataque et conicit de insuper in? Iugulare veniente unda *dimovit* dei
 Cephenum et secutum iam occupat cernam.
-
 - Summo matris in et
 - Auroram Palatia
 - Iussaque levat
@@ -45,7 +46,7 @@ Cephenum et secutum iam occupat cernam.
 
 Veneno Silenus. O carmen dominum palearia luctusque iacet servavit pueri et
 candida nostras, o est felicior, silvas et.
-
+``` c
     if (bridge.modem_exabyte(error(memory, app, delHard))) {
         safe_rw(floating_directx_font, system_hypertext_manet, sdk + token);
         sector_encoding += design;
@@ -56,7 +57,7 @@ candida nostras, o est felicior, silvas et.
     var mini_output = -4;
     restoreServerSamba(displaySslCmyk + matrixAutoresponder, dfs + -5, 5);
     var memory = password_snippet_t;
-
+```
 ## Iunguntur ferox
 
 Moriens conceperat ridentem dextra [madebit](http://haskell.org/) petit. Movere

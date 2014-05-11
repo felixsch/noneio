@@ -2,13 +2,14 @@
 
 import System.IO
 import System.Directory
+import System.FilePath
 import Control.Applicative
 import Data.Monoid
 import qualified Data.Map as M
 
+import qualified Text.Pandoc.Options as O
+
 import Hakyll
-
-
 
 main :: IO ()
 main 
@@ -22,9 +23,14 @@ main
     match "templates/*" $ compile templateCompiler
 
     -- copy static images
-    match ("static/*.png" .||. "static/*.svg") $ do
+    match (  "static/*.png" 
+        .||. "static/*.svg"
+        .||. "posts/*.png"
+        .||. "g/*/*"
+        .||. "posts/*.svg") $ do
         route idRoute
         compile copyFileCompiler
+
 
     -- handle css
     match "static/css/*.css" $ do
@@ -50,15 +56,15 @@ main
     match (fromList staticPages) $ do
         route idRoute
         compile $ makeItem ""
-            >>= loadAndApplyTemplate "templates/base.html" (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/base.html" (indexCtx  tags)
             >>= relativizeUrls
 
     -- create index page
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
-            >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html" (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/index.html" (indexCtx  tags)
+            >>= loadAndApplyTemplate "templates/base.html" (indexCtx  tags)
             >>= relativizeUrls
 
     -- create rss feed
@@ -95,6 +101,7 @@ postCtx :: Tags -> Context String
 postCtx 
     tags = tagsField "tags" tags
         <> dateField "date" "%B %d, %Y"
+        <> field "math" mathjax
         <> defaultContext
 
 config :: Configuration
@@ -111,34 +118,15 @@ feedConfig
     , feedRoot          = "http://none.io"
     }
 
-data Photo = Photo
-    { photoName :: Identifier
-    , photoDescription :: Maybe String
-    , photoThumbnail :: FilePath
-    , photoPath :: FilePath
-    } deriving (Show)
-
-instance Writable Photo where
-    write fp item = copyFile (photoPath $ itemBody item) fp
-
-data Gallery = Gallery
-    { galleryName :: Identifier
-    , galleryPhotos :: [Photo]
-    , galleryDependency :: Dependency
-    } deriving (Show)
-
-getGalleries :: MonadMetadata m => Identifier -> m [String]
-getGalleries
-    i = do
-    metadata <- getMetadata i
-    return $ maybe [] (map trim . splitAll ",") $ M.lookup "galleries" metadata
-
-buildGalleries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m [Gallery]
-buildGalleries
-    pattern make = do
-        matches <- getMatches pattern
-        
-        
+mathjax :: Item String -> Compiler String
+mathjax
+    item = do
+        metadata <- getMetadata (itemIdentifier item)
+        return $ case M.lookup "math" metadata of
+            Just "true" -> script
+            otherwise -> ""
+    where
+      script = "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\" />"
         
 
 
