@@ -1,4 +1,5 @@
-none.io
+[http://none.io](http://none.io)
 ======
 
-My webblog
+My simple web Blog written in Haskell using Hakyll.
+
