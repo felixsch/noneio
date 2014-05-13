@@ -1,12 +1,8 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
-import System.IO
-import System.Directory
-import System.FilePath
 import Control.Applicative
 import Data.Monoid
 import qualified Data.Map as M
-import qualified Data.Set as S
 
 import qualified Text.Pandoc.Options as O
 import Text.Highlighting.Kate.Styles (pygments)
@@ -79,14 +75,13 @@ main
 
 compileTags :: Tags -> String -> Pattern -> Rules ()
 compileTags
-    tags tag pattern = do
+    tags tag _ = do
         route idRoute
         compile $ makeItem ""
             >>= loadAndApplyTemplate "templates/category.html" tagsCtx
             >>= loadAndApplyTemplate "templates/base.html" tagsCtx
             >>= relativizeUrls
         where
-            title = "Tagged with " ++ tag
             tagsCtx = constField "title" ("Tagged with " ++ tag) 
                    <> listField "posts" (postCtx tags) (take 10 <$> (recentFirst =<< loadAll "posts/*.md"))
                    <> defaultContext

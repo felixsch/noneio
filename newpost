@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DATE=$(date +%Y-%m-%d)
+TITLE=$@
+
+FILE="posts/${DATE}-${TITLE// /-}.md"
+
+if [ -f ${FILE} ]; then
+    echo "Post allready exists..."
+    exit 0
+fi
+
+echo "---" >> ${FILE}
+echo "title: ${TITLE}" >> ${FILE}
+echo "description: " >> ${FILE}
+echo "tags: " >> ${FILE}
+echo "---" >> ${FILE}
+
+vim ${FILE}
+
+
+
