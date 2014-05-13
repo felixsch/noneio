@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+
 <link rel="stylesheet" href="/static/css/style.css" type="text/css" media="screen"/>
 <link rel="stylesheet" href="/static/css/source.css" type="text/css" media="screen"/>
 <title>none.io - $title$</title>
@@ -16,7 +18,9 @@
                 <li><a href="feed.xml">FEED</a></li>
             </ul>
         </div>
-        $body$
+        <div id="content">
+            $body$
+        </div>
         <div id="foot">
             $partial("templates/footer.html")$ 
         </div>

@@ -44,7 +44,7 @@ body {
 
     background-color: #f6f5ee;
     background-image: url('/static/noise.png');
-    
+    min-height: 100%; 
     width: 98%;
     margin: 0 auto;
     display: block;
@@ -144,12 +144,17 @@ img {
 
 
 #foot {
-    height: 200px;
-
+    border-top: 1px solid #000;
+    margin: 50px 0 0 0;
+    padding: 5px 0 40px 0;
+    font-size: 0.8em;
     }
 
-#fixed-right {
-    position: fixed;
-    bottom: 4px;
-    right: 2%;
+.pull-center {
+    margin: 0 auto;
 }
+
+.text-center {
+    text-align: center;
+}
+
