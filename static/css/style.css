@@ -43,7 +43,7 @@ body {
 #border {
 
     background-color: #f6f5ee;
-    background-image: url('noise.png');
+    background-image: url('/static/noise.png');
     
     width: 98%;
     margin: 0 auto;

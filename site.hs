@@ -55,8 +55,8 @@ main
 
     -- handle static pages
     match (fromList staticPages) $ do
-        route idRoute
-        compile $ makeItem ""
+        route $ setExtension "html"
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions
             >>= loadAndApplyTemplate "templates/base.html" (indexCtx  tags)
             >>= relativizeUrls
 
@@ -74,7 +74,7 @@ main
         compile $ loadAllSnapshots "posts/*" "posts"
             >>= renderRss feedConfig defaultContext
     where
-        staticPages = []
+        staticPages = ["notice.md", "about.md"]
 
 
 compileTags :: Tags -> String -> Pattern -> Rules ()
@@ -108,6 +108,8 @@ postCtx
 config :: Configuration
 config 
     = defaultConfiguration
+        { deployCommand = "rsync -avz -e ssh ./_site/ none.io:/home/felixsch/html/"
+        }
 
 feedConfig :: FeedConfiguration
 feedConfig
