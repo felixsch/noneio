@@ -1,12 +1,23 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
 import Control.Applicative
+
+import System.Locale (defaultTimeLocale)
+
 import Data.Monoid
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format (formatTime)
+import Data.List (isPrefixOf)
 import qualified Data.Map as M
 
 import qualified Text.Pandoc.Options as O
 import Text.Highlighting.Kate.Styles (pygments)
+
 import Hakyll
+
+siteRoot :: String
+siteRoot = "http://none.io"
+
 
 main :: IO ()
 main 
@@ -22,9 +33,11 @@ main
     -- copy static images
     match (  "static/*.png" 
         .||. "static/*.svg"
+        .||. "static/*.gif"
         .||. "posts/*.png"
         .||. "g/*/*"
-        .||. "posts/*.svg") $ do
+        .||. "posts/*.svg"
+        .||. "robots.txt") $ do
         route idRoute
         compile copyFileCompiler
 
@@ -46,22 +59,29 @@ main
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
             >>= saveSnapshot "posts"
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html" defaultContext
+            >>= baseTemplate
             >>= relativizeUrls
 
     -- handle static pages
     match (fromList staticPages) $ do
         route $ setExtension "html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions
-            >>= loadAndApplyTemplate "templates/base.html" (indexCtx  tags)
+            >>= baseTemplate
             >>= relativizeUrls
+
+    create ["404.html"] $ do
+        route $ idRoute
+        compile $ makeItem ""
+            >>= loadAndApplyTemplate "templates/404.html" defaultContext
+            >>= baseTemplate
+            >>= absoluteUrls siteRoot
 
     -- create index page
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
             >>= loadAndApplyTemplate "templates/index.html" (indexCtx  tags)
-            >>= loadAndApplyTemplate "templates/base.html" (indexCtx  tags)
+            >>= baseTemplate
             >>= relativizeUrls
 
     -- create rss feed
@@ -69,9 +89,24 @@ main
         route idRoute
         compile $ loadAllSnapshots "posts/*" "posts"
             >>= renderRss feedConfig defaultContext
+    
+    -- create sitemap.xml
+    create ["sitemap.xml"] $ do
+        route idRoute
+        compile $ makeItem ""
+            >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx tags)
     where
         staticPages = ["notice.md", "about.md"]
 
+
+baseTemplate :: Item String -> Compiler (Item String)
+baseTemplate
+    = loadAndApplyTemplate "templates/base.html" defaultContext
+
+
+absoluteUrls :: String -> Item String -> Compiler (Item String)
+absoluteUrls
+    root = return . fmap (relativizeUrlsWith root)
 
 compileTags :: Tags -> String -> Pattern -> Rules ()
 compileTags
@@ -86,10 +121,22 @@ compileTags
                    <> listField "posts" (postCtx tags) (take 10 <$> (recentFirst =<< loadAll "posts/*.md"))
                    <> defaultContext
 
+sitemapCtx :: Tags -> Context String
+sitemapCtx
+    tags = defaultContext
+    <> listField "posts" (postCtx tags) (recentFirst =<< loadAll "posts/*.md")
+    <> nowField "created" "%Y.%m.%d"
+
+nowField :: String -> String -> Context String
+nowField
+    key fmt = field key $ \_ -> unsafeCompiler $ (formatTime defaultTimeLocale fmt <$> getCurrentTime)
+
+
 indexCtx :: Tags -> Context String
 indexCtx 
     tags = constField "title" "HOME"
         <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
+        <> modificationTimeField "mod" "%Y.%m.%d"
         <> defaultContext
 
 
@@ -97,6 +144,7 @@ postCtx :: Tags -> Context String
 postCtx 
     tags = tagsField "tags" tags
         <> dateField "date" "%B %d, %Y"
+        <> modificationTimeField "mod" "%Y.%m.%d"
         <> field "math" mathjax
         <> defaultContext
 

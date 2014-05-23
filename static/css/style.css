@@ -10,6 +10,7 @@
 }
 
 
+
 html {
     height: 100%;
     user-select: none;
@@ -20,9 +21,21 @@ a, a:active, a:link, a:visited {
     color: #781905;
 }
 
+p {
+    line-height: 1.2;
+}
+
 a:hover {
     animation: blink 3s;
     animation-iteration-count: infinite;
+}
+
+h1 {
+    font-size: 3em;
+}
+
+h2 {
+    font-size: 2em;
 }
 
 body {
@@ -43,7 +56,7 @@ body {
 #border {
 
     background-color: #f6f5ee;
-    background-image: url('/static/noise.png');
+    background-image: url('http://none.io/static/noise.png');
     min-height: 100%; 
     width: 98%;
     margin: 0 auto;
@@ -52,6 +65,7 @@ body {
 
 #center {
     width: 70%;
+    max-width: 740px;
     margin: 0 auto;
 }
 
@@ -117,7 +131,6 @@ img {
 }
 
 .article {
-    font-size: 3em;
     padding: 5% 0 0 0;
 }
 
@@ -128,7 +141,7 @@ img {
     margin: 0;
 }
 .article p{
-    font-size: .4em;
+    font-size: 1.5em;
     font-style: italic;
 
     color: #781905;
@@ -156,5 +169,9 @@ img {
 
 .text-center {
     text-align: center;
+}
+
+.big-font {
+    font-size: 6em;
 }
 

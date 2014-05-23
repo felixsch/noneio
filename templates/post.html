@@ -1,12 +1,15 @@
 <div id="logo-post">
     <img src="/static/brain.svg" alt="brain!"></img>
 </div>
-
+<article itemscope itemprop="http://schema.org/BlogPosting">
+<meta itemprop="description" content="$description$" />
+<meta itemprop="author" content="Felix Schnizlein" />
 <div class="article">
-    $title$
-    <p>$date$ under $tags$</p>
+    <h1 itemprop="name">$title$</h1>
+    <p><time datetime="$date$" itemprop="datePublished">$date$</time> under $tags$</p>
 </div>
-$body$
+<div itemprop="articleBody">$body$</div>
+</article>
 <br/>
 <h2>Comments</h2>
 <div id="disqus_thread"></div>
