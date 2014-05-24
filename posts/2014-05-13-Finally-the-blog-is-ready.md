@@ -1,5 +1,5 @@
 ---
-title: Finally the blog is ready
+title: The blog is finally ready
 description: The first blog entry
 tags: misc
 ---
