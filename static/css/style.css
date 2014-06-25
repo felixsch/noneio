@@ -32,10 +32,12 @@ a:hover {
 
 h1 {
     font-size: 3em;
+    text-shadow: 2px 2px 1px rgba(150, 150, 150, 0.30);
 }
 
 h2 {
     font-size: 2em;
+    text-shadow: 2px 2px 1px rgba(150, 150, 150, 0.30);
 }
 
 body {
@@ -104,7 +106,7 @@ body {
     text-decoration: underline;
 }
 
-ul {
+#head ul {
     margin: 0;
     padding: 0;
 }
@@ -173,5 +175,14 @@ img {
 
 .big-font {
     font-size: 6em;
+}
+
+
+pre {
+    background-color: rgba(228, 228, 228, 1);
+}
+code {
+    
+    background-color: rgba(228, 228, 228, 1);
 }
 

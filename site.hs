@@ -34,13 +34,14 @@ main
     match (  "static/*.png" 
         .||. "static/*.svg"
         .||. "static/*.gif"
-        .||. "posts/*.png"
         .||. "g/*/*"
-        .||. "posts/*.svg"
         .||. "robots.txt") $ do
         route idRoute
         compile copyFileCompiler
 
+    match "img/*" $ do
+        route idRoute
+        compile copyFileCompiler
 
     -- handle css
     match "static/css/*.css" $ do
@@ -87,7 +88,7 @@ main
     -- create rss feed
     create ["feed.xml"] $ do
         route idRoute
-        compile $ loadAllSnapshots "posts/*" "posts"
+        compile $ loadAllSnapshots "posts/*.md" "posts"
             >>= renderRss feedConfig defaultContext
     
     -- create sitemap.xml

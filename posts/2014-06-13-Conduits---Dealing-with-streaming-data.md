@@ -4,11 +4,9 @@ description: Introduction to a easy to use event driven streaming library in Has
 tags: Haskell Programming
 ---
 
-#Conduits - Working with streaming data
+__Every programmer knows the problem about dealing with streaming data with constant memory usage. Thanks to Michael Snoyman there is a handy solution to this problem. Conduits are a way to handle streaming data in a efficent easy event driven way.__
 
-Every programmer knows the problem about dealing with streaming data with constant memory usage. Thanks to Michael Snoyman there is a handy solution to this problem. Conduits are a way to handle streaming data in a efficent easy event driven way.
-
-```haskell
+~~~~ {.haskell .numberLines}
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 
@@ -33,9 +31,9 @@ showMe = CL.map show
 
 main :: IO ()
 main = source $$ conduit =$= showMe =$ sink
-```
+~~~~
 ##First Look 
-
+<img src="../img/conduit.png" alt="conduit visualisation" align="right"/>
 The basic implementation can be found in the [conduit](1) package on hackage. There is also a second package [conduit-extra](2) which ships some neat implementation like a attoparsec integration or a simple network interface.
 
 Ok lets introduce us to the basic conduit types. As you can see in the above example conduit is basicly a _monad transformer_. There are four types your should mind of.
@@ -46,6 +44,7 @@ To achive a lot of codereuse and simplify the type structure all types like `Sin
 
 
 There a lot of free variables. Here the meaning:
+
 - __i__ input type
 - __o__ output type
 - __m__ monad to transform
@@ -53,23 +52,22 @@ There a lot of free variables. Here the meaning:
 
 All other types wrap `ConduitM`
 
-```haskell
+~~~~ {.haskell}
 type Source m o = ConduitM () o m ()
 
 type Sink i = ConduitM i Void
 
 type Conduit i m o = ConduitM i o m ()
-
-```
+~~~~
 
 ## What's going on?
 
 This is fine but, how is this surposed to work? First let clearify who the structure of conduit is working. You can imagne a pipe where data comes from the one end, proceeded in the pipe and returned at the other end. Where the data comes in is called `Source`, this data is proceeded by some `Conduits` and maybe printed/send/whatever by the `Sink`.
 This means all data from `Source` will be send downstream to the `Sink`.
 
-```haskell
+~~~~ {.haskell}
 main = source $$ conduit =$= anotherConduit =$ sink
-```
+~~~~
 The infix operators called _fuses_.
 
 - `=$`  fuse a `Conduit` and `Sink` together and create a new `Sink`
@@ -87,8 +85,8 @@ By the way you can lookup all operators types here: [conduit on hackage](1)
 Now lets create some types. Because all types finally based on `ConduitM` all functions can used in all types.
 
 Basic conduit example:
-
-```haskell
+~~~~
+~~~~ {.haskell .numberLines}
 import System.IO
 import Data.Conduit
 import qualified Data.Conduit.List as CL
@@ -96,7 +94,7 @@ import qualified Data.Conduit.List as CL
 main = do
     nums <- CL.sourceList [1..10] $= CL.map (*2) =$= CL.map (+1) $$ CL.consume
     putStrLn $ show nums
-```
+~~~~
 
 ## Core functions. Awaiting data...
 
@@ -108,7 +106,7 @@ To write own conduits there are _three_ core functions you should aware of:
 
 Example of `await`:
 
-```haskell
+~~~~ {.haskell .numberLines}
 import Control.Monad.IO.Class (liftIO)
 import System.IO
 import Data.Conduit
@@ -140,8 +138,9 @@ sink = do
       
 main :: IO ()
 main = source $= conduit $$ sink
-```
+~~~~
 Output:
+
 ```
 »» runhaskell cond1.hs
 moep
@@ -175,7 +174,7 @@ This function makes it easy to create `Sink`'s and `Conduit`'s. There are some o
 
 The above example will simplified like:
 
-```haskell
+~~~~ {.haskell .numberLines}
 import Control.Monad.IO.Class (liftIO)
 import System.IO
 import Data.Conduit
@@ -193,14 +192,14 @@ conduit = awaitForever isFloep
 
 sink :: String IO ()
 sink = CL.mapM (liftIO . putStrLn)
-```
+~~~~
 Whit the utility function is pretty easy to write clean Haskell code without wasting time on dedection if its _Just_ a value or _Nothing_.
 One more greate thing you should mind: Because of the Monadic structure it is possible to use standard monadic binding. This doesn't only affect writing primitives it's also possible to do this with larger components (like Source/Sink like structures):
 
-```haskell
+~~~~ {.haskell .numberLines}
 producer :: Producer [String] IO
 producer = awaitForever $ \x -> CL.sourceList [x,x]
-```
+~~~~
 
 ## Transform!
 
