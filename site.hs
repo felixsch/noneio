@@ -39,6 +39,7 @@ main
         route idRoute
         compile copyFileCompiler
 
+    -- handle images
     match "img/*" $ do
         route idRoute
         compile copyFileCompiler

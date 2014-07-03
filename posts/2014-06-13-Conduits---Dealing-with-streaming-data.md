@@ -4,14 +4,16 @@ description: Introduction to a easy to use event driven streaming library in Has
 tags: Haskell Programming
 ---
 
-__Every programmer knows the problem about dealing with streaming data with constant memory usage. Thanks to Michael Snoyman there is a handy solution to this problem. Conduits are a way to handle streaming data in a efficent easy event driven way.__
+__Most programmers already know how hard it could be to deal with streaming data in a nice and efficient way. The conduit package addresses the problems of working with streaming data and offers a solution to work, transform, consume streams of data in a event driven way. Conduit also takes care of lifetime of data streams and organises the data do be proceeded with constant memory usage. In my opinion all this makes it worth to take a closer look to that neat solution.__
+
+The package and module reference can be found at [hackage](http://hackage.haskell.org/conduit). If you interested in real word packages who use _conduit_ to manage streaming data take a look at: [http-conduit](http://hackage.haskell.org/http-conduit) or [xml-conduit](http://hackage.haskell.org/xml-conduit).
+
+Let\'s start with a introductory example:
 
 ~~~~ {.haskell .numberLines}
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 
-sink :: Sink String IO ()
-sink = CL.mapM putStrLn
 
 source :: Source IO Int
 source = CL.sourceList [1..20]
@@ -19,94 +21,109 @@ source = CL.sourceList [1..20]
 conduit :: Conduit Int IO Int
 conduit = do
     first <- await
-    second <- await
-    case (first,second) of
-       (Just f, Just s) -> do
-         leftover s 
-         yield f*s
-         conduit
+    case first of
+        (Just f) -> yield (f ++ 1) >> conduit
     
 showMe :: Conduit Int IO String
 showMe = CL.map show
 
+sink :: Sink String IO ()
+sink = CL.mapM putStrLn
+
 main :: IO ()
 main = source $$ conduit =$= showMe =$ sink
 ~~~~
-##First Look 
-<img src="../img/conduit.png" alt="conduit visualisation" align="right"/>
-The basic implementation can be found in the [conduit](1) package on hackage. There is also a second package [conduit-extra](2) which ships some neat implementation like a attoparsec integration or a simple network interface.
 
-Ok lets introduce us to the basic conduit types. As you can see in the above example conduit is basicly a _monad transformer_. There are four types your should mind of.
+## Let's start
 
-To achive a lot of codereuse and simplify the type structure all types like `Sink`, `Source`, `Conduit` are just wrapper around `ConduitM`. This type is the _core monad_ of the conduit package.
+Grasping the concept of _conduit_ isn\'t hard. Imagine a tap which is connected to pipes which finally ends in a drainage. The pipes itself can be a complex construction with some machines proceeding what ever comes trough the pipes.
+In the _conduit_ package there is a type which is something like a tap, it\'s called `Source`. As the name implies, it generates data (for example reading data from a file descriptor or socket). There is also a drainage like type: The `Sink` which consumes data and performs actions on received data (for example print it to the screen). The last one of the triplet is `Conduit`. `Conduits` are the machines in the construction which maybe transform the data or manage how the data flows.
+With these three types you\'re able to write the most _conduit_ based implementations you want.
 
-`newtype ConduitM i o m r = ConduitM { ... }`
-
-
-There a lot of free variables. Here the meaning:
-
-- __i__ input type
-- __o__ output type
-- __m__ monad to transform
-- __r__ the return value
-
-All other types wrap `ConduitM`
+Looking at the haskell definitions offers that all three types are merely wrappers around one generic transformer monad.
 
 ~~~~ {.haskell}
+-- Source got no input type (because it only generates data) and no return type
 type Source m o = ConduitM () o m ()
 
-type Sink i = ConduitM i Void
+-- A only takes a input type and produces a result
+type Sink i m r = ConduitM i Void m r
 
+-- Take a input aswell as a output type but does not return a explicit result
 type Conduit i m o = ConduitM i o m ()
 ~~~~
 
-## What's going on?
+Currently `i`, `m`, `o`, `r` makes no sense without guessing. So let\'s take a look at 
+the definition of the monad transformer `ConduitM`:
 
-This is fine but, how is this surposed to work? First let clearify who the structure of conduit is working. You can imagne a pipe where data comes from the one end, proceeded in the pipe and returned at the other end. Where the data comes in is called `Source`, this data is proceeded by some `Conduits` and maybe printed/send/whatever by the `Sink`.
-This means all data from `Source` will be send downstream to the `Sink`.
+`newtype ConduitM i o m r = ConduitM { ... }`
+
+- __i__  - input type
+- __o__  - output type
+- __m__  - monad to transform
+- __r__  - the return value
+
+The abstraction to one generic transformer makes it possible to reuse a lot of code and make programming _conduits_ a lot more pleasant (as you will see later).
+
+We now understand the basic monadic types of the _conduit_ package. But with only the types we\'re not able to do anything useful.
+
+## Glue together?
 
 ~~~~ {.haskell}
 main = source $$ conduit =$= anotherConduit =$ sink
+-- equialent
+main = source $= conduit =$= anotherConduit $$ sink
 ~~~~
-The infix operators called _fuses_.
+
+What\'s currently missing are the pipes in _conduits_. Something is needed to glue a `Source`, some `Conduits` and a `Sink` together. Conduits introduces here
+two new names. First the package provide some functions which tie two types together and return a new one. These functions called `Fuse` operators. The second new name is `Connector` which is a function which _connects_ a `Source` and a `Sink` together and produce a useful output.
+
+
+__Fuses__:
 
 - `=$`  fuse a `Conduit` and `Sink` together and create a new `Sink`
  
 - `$=`  fuse a `Source` and `Conduit` together and create a new `Source`
  
-- `=$=` combines two `Conduit` and creates a newone
+- `=$=` combines two `Conduits` and creates a new `Conduit`
 
-To connect all together there is the _connector_:
+__Connector__:
 
 - `$$` connects a `Source` and a `Sink`
 
-By the way you can lookup all operators types here: [conduit on hackage](1)
+_Just remember: You can lookup the full reference at [hackage](http://hackage.haskell.org/package/conduit/docs/Data-Conduit.html)_
 
-Now lets create some types. Because all types finally based on `ConduitM` all functions can used in all types.
+Now we\'re able to put some `Conduits`, `Sources` and `Sinks` together. But the real interesting part is, how to implement `ConduitM` like functions (`Sources`, `Sinks` and especially `Conduits`).
 
-Basic conduit example:
+## It\'s all about the flow!
+
+Before looking into implementing conduit based functions, we should think about the data flow and the flow how data is proceeded. Imagine the tap, pipes and the drainage again: The data flows from the tap through the pipes in the drainage. In a conduit structure the same is happening. Data flows from the `Source` to the `Sink` via maybe some `Conduits`, from now on we call this _downstream_.
+
+In conduits the working flow is vice versa (_upstream_). The first element which start to work is the `Sink`.
+
+It will `await` some data. Because there is currently none, it paused and asks the next element _upstream_ some. In most cases this is a `Conduit`. Here the same procedure taking place. The `Conduit` `awaits` data but there is none it paused and ask the next element _upstream_. The same procedure is happening as long as a `Source` is reached.
+
+The `Source` maybe has data available. It `yield` some data _downstream_ where the data is proceeded by the next waiting _conduit_. Now all elements which are `awaiting` data are successive called and `yielding` data _downstream_ until the `Sink` returns the final value or for example prints it to the screen.
+
+Now, the basic functions aren\'t hard do understand.
+
+~~~~ {.haskell}
+-- Pull data from upstream
+await :: Monad m => Consumer i m (Maybe i)
+
+-- Put data to downstream
+yield :: Monad m => o -> ConduitM i o m ()
+
+-- Put data back to upstream
+leftover :: i -> ConduitM i o m ()
 ~~~~
-~~~~ {.haskell .numberLines}
-import System.IO
-import Data.Conduit
-import qualified Data.Conduit.List as CL
 
-main = do
-    nums <- CL.sourceList [1..10] $= CL.map (*2) =$= CL.map (+1) $$ CL.consume
-    putStrLn $ show nums
-~~~~
+With this three functions, which of course work in __all__ types (because of `ConduitM`), where finally able to create our own machines (`Conduits`) which transforms data in the way we want.
 
-## Core functions. Awaiting data...
+Lets look at a simple example:
 
-To write own conduits there are _three_ core functions you should aware of:
+~~~~ {.haskell .lineNumbers}
 
-- `await` Pull data from upstream
-- `yield d` Put data downstream
-- `leftover d` Put data back at the position where it was taken from. Now the next await can consume it.
-
-Example of `await`:
-
-~~~~ {.haskell .numberLines}
 import Control.Monad.IO.Class (liftIO)
 import System.IO
 import Data.Conduit
@@ -149,30 +166,19 @@ I do not like floep
 knoep
 ```
 
-## There is a easier way!
+## The easier way around
 
+You might noticed that in implementation of _conduit_ first a `await` is called which returns a `Maybe` value. The function also uses recursion. Handle this and dealing with `Maybe` values all the time is tedious. That\'s why there is a nice helper function you should know of:
 
-Dealing with `Maybe value` is tedious. The `Data.Conduit.List` module helps out. With the function `awaitForever` you will be able to get around a lot of case statements also no need to think about the recursion of function you are implementeing
+~~~~ {.haskell}
+awaitForever :: Monad m => (i -> ConduitM i o m r) -> ConduitM i o m ()
+~~~~
 
+`awaitForever` calles a function `(i -> ConduitM i o m r)` every time data is available.
 
+Most nice things never come alone (at least in this case). Some utility functions are defined in `Data.Conduit.List` (reference [here](http://hackage.haskell.org/package/conduit/Data-Conduit-List.html)). It\'s advisable to import it as _qualified_ module, because it redefines some standard functions.
 
-
-
- 
-
-
-
-## There is a easier way!
-
-
-Dealing with _Maybe value_ and _handle recursion_ is tedious but there is a utility function you good to know of:
- 
-`awaitForever :: Monad m => (i -> ConduitM i o m r) -> ConduitM i o m ()`
-
-This function makes it easy to create `Sink`'s and `Conduit`'s. There are some other neat utility function in the module
-`Data.Conduit.List`.
-
-The above example will simplified like:
+With `awaitForever` and `Data.Conduit.List` the above example can be simplified like:
 
 ~~~~ {.haskell .numberLines}
 import Control.Monad.IO.Class (liftIO)
@@ -193,18 +199,107 @@ conduit = awaitForever isFloep
 sink :: String IO ()
 sink = CL.mapM (liftIO . putStrLn)
 ~~~~
-Whit the utility function is pretty easy to write clean Haskell code without wasting time on dedection if its _Just_ a value or _Nothing_.
-One more greate thing you should mind: Because of the Monadic structure it is possible to use standard monadic binding. This doesn't only affect writing primitives it's also possible to do this with larger components (like Source/Sink like structures):
 
-~~~~ {.haskell .numberLines}
-producer :: Producer [String] IO
-producer = awaitForever $ \x -> CL.sourceList [x,x]
+## The `Producer` and the `Consumer` - just a generalization
+
+Look again at the definition of `await`:
+
+~~~~ {.haskell}
+await :: Monad m => Consumer i m (Maybe i)
 ~~~~
 
-## Transform!
+We expected a `ConduitM` as return type, but apparently isn\'t. That\'s because there are two more wrappers around `ConduitM`. They called `Consumer` and `Producer`.
+
+Because in some cases we need to generalise some parts of `ConduitM`. Take a look at the definitions:
+
+~~~~ {.haskell}
+type Producer m o = forall i. ConduitM i o m ()
+
+type Consumer i m r = forall o. ConduitM i o m r
+~~~~
+
+`Producer` is a generalized `Source`. It\'s needed if a function should take any input and also give a output. `Consumer` is the counterpart of `Producer` and a generalization of a `Sink`. It can take any output and also feeds some input.
+
+Too make it more clear here again the definition of `Source` and `Sink`:
+
+~~~~ {.haskell}
+type Source m o = ConduitM () o m () -- can't take any input
+
+type Sink i m r = ConduitM i Void m r  -- doesn't have any output
+~~~~
+
+With this generalisations it\'s possible to combine for example `Sources` and `Conduits`.
+
+~~~~ {.haskell .numberLines}
+doubleTime :: Producer IO Int
+doubleTime = awaitForever $ \x -> CL.sourceList [x,x]
+
+takeTwice :: Consumer Int IO [Int]
+takeTwice = CL.take 2
+~~~~
+
+If you want to convert a `Source` to a `Producer` and a `Sink` to a `Consumer` there is `toProducer` and `toConsumer`.
 
 
-Until now the examples explicitly used the `IO` Monad. But conduits are not suck to `IO`. You also can use `State` or your own structure. But remeber some action requires that your structure need's to be a monad (yea sure conduit is monad transformer).
-In conduit you can use `lift` or `liftIO` as usual.
+## Finalization
 
-k
+One important thing is still missing. If any `Conduit` or `Sink` fails or returns the conduit immediately returns the value. But want happens to allocated/opened objects (for example a open file descriptor)? The `conduit` package offers a solution called _finalization_.
+If any element in a _conduit_ system fails, the finalization callback which where set are triggered. This callback is overwritten by any _upstream_ element.
+
+You can manage finalization with these functions:
+
+~~~~ {.haskell}
+-- adds a finalize callback
+addCleanup :: Monad m => (Bool -> m ()) -> Conduit i o m r -> Conduit i o m r
+
+-- yield or a finalize function
+yieldOr :: Monad m => o -> m () -> Conduit i o m ()
+
+-- run a component and guarantee exception safety
+bracketP :: MonadResource m => IO a -> (a -> IO ()) -> (a -> ConduitM i o m r) -> ConduitM i o m r
+~~~~
+
+Using `addCleanup` to close a file handle:
+
+~~~~ {.haskell .numberLines}
+
+cleanupSource :: Source IO Char
+cleanupSource = do
+    hdl <- liftIO $ openFile "foobar.txt" ReadMode
+    addCleanup cleanupC (readChar hdl)
+    where
+      cleanupCb    = hClose handle
+      readChar hdl = do
+        isEof <- liftIO $ hIsEOF hdl
+        if isEof
+            return () -- we're done now
+            else (liftIO $ hGetChar hdl >>= yield) >> readChar hdl
+~~~~
+
+`addCleanup` is nice and easy to use. But there is still a major problem. What happens if on of the handle functions (like `openFile`) throws an exception? To overcome this there is `bracketP` on the one side and a complete package `ResourceT` on the other side. 
+If you are more interested in `ResourceT` take a look at [resourcet](https://hackage.haskell.org/package/resourcet).
+
+## Resumable Conduits
+
+In some cases it would be nice to pause a data procession and resume it later. Thats why conduits implements `ResumableSource`. Using the special functions (which looks similar to the normal one) it is possible to build resumable conduit systems like normal ones. The `$$+` operator generates a `ResumableSource` out of a `Source` and a `Sink`. After other operations the procession can be continued with `$$++`. At the end, to avoid delayed cleanup, call `$$+-` which triggers _finalization_. For the sake of completeness there is also a generalization of `ResumableSource` which is called `ResumableConduit` but we will not looker into these generalisation.
+
+
+
+That\'s it!
+
+I hope I could help understanding the basics of the _conduit_ package.
+
+
+## Further reading
+
+- [FPComplete: Conduit Overview](https://www.fpcomplete.com/school/to-infinity-and-beyond/pick-of-the-week/conduit-overview)
+- [Yesod Blog: Conduits Buffering](http://www.yesodweb.com/blog/2012/01/conduits-buffering)
+
+- [Yesod Blog: Core flaws of pipes and conduit](http://www.yesodweb.com/blog/2013/10/core-flaw-pipes-conduit)
+
+- [https://hackage.haskell.org/package/conduit](https://hackage.haskell.org/package/conduit)
+- [https://hackage.haskell.org/package/conduit-extra](https://hackage.haskell.org/package/conduit-extra)
+- [http://hackage.haskell.org/package/http-conduit](http://hackage.haskell.org/package/http-conduit)
+- [https://hackage.haskell.org/package/resourcet](https://hackage.haskell.org/package/resourcet)
+
+
