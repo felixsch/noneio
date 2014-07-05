@@ -185,4 +185,7 @@ code {
     background-color: rgba(228, 228, 228, 1);
 }
 
+#content img {
+    margin: 3px;
+}
 
