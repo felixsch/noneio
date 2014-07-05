@@ -127,7 +127,7 @@ sitemapCtx :: Tags -> Context String
 sitemapCtx
     tags = defaultContext
     <> listField "posts" (postCtx tags) (recentFirst =<< loadAll "posts/*.md")
-    <> nowField "created" "%Y.%m.%d"
+    <> nowField "created" "%Y-%m-%d"
 
 nowField :: String -> String -> Context String
 nowField
@@ -138,7 +138,7 @@ indexCtx :: Tags -> Context String
 indexCtx 
     tags = constField "title" "HOME"
         <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
-        <> modificationTimeField "mod" "%Y.%m.%d"
+        <> modificationTimeField "mod" "%Y-%m-%d"
         <> defaultContext
 
 
@@ -146,7 +146,8 @@ postCtx :: Tags -> Context String
 postCtx 
     tags = tagsField "tags" tags
         <> dateField "date" "%B %d, %Y"
-        <> modificationTimeField "mod" "%Y.%m.%d"
+        <> dateField "created" "%Y-%m-%d"
+        <> modificationTimeField "mod" "%Y-%m-%d"
         <> field "math" mathjax
         <> defaultContext
 
