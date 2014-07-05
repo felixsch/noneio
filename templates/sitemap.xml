@@ -10,7 +10,7 @@
     <lastmod>$created$</lastmod>
   </url>
   <url>
-    <loc>http://none/io/about.html</loc>
+    <loc>http://none.io/about.html</loc>
     <lastmod>$created$</lastmod>
   </url>$for(posts)$
   <url>
