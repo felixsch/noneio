@@ -54,6 +54,13 @@ main
         route idRoute
         compile copyFileCompiler
 
+    -- handle unpublished posts
+    match "draft/*.md" $ do
+        route $ setExtension ".html"
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
+            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
+            >>= baseTemplate
+            >>= relativizeUrls
 
     -- handle posts
     match "posts/*.md" $ do
