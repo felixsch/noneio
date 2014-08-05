@@ -3,7 +3,7 @@ title: Adding extra informations to data types using Phantom types
 description: 
 tags: Haskell, Phantom types, programming
 ---
-__Phantom types are ordinary `data` or `newtype` types with an extra parameter on the left side of the data definition which is _not_ used on the right side.__
+___Phantom types_ are ordinary `data` or `newtype` types with an extra parameter on the left side of the data definition which is _not_ used on the right side.__
 ```{.haskell}
 data PhantomizedType a = PhantomizedType
 ```

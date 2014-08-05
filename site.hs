@@ -7,7 +7,7 @@ import System.Locale (defaultTimeLocale)
 import Data.Monoid
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, intercalate)
 import qualified Data.Map as M
 
 import qualified Text.Pandoc.Options as O
@@ -15,9 +15,9 @@ import Text.Highlighting.Kate.Styles (pygments)
 
 import Hakyll
 
-siteRoot :: String
 siteRoot = "http://none.io"
-
+siteKeywords = "Programming, Haskell, C++, Felix, Schnizlein, Personal, Blog, Vegan, Food"
+siteDescription = "Personal blog of Felix. Writing what ever comes to mind. Mainly about Haskell and other programming languages. But also about music, politics and cooking vegan food."
 
 main :: IO ()
 main 
@@ -57,9 +57,9 @@ main
     -- handle unpublished posts
     match "draft/*.md" $ do
         route $ setExtension ".html"
-        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions   
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= baseTemplate
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
             >>= relativizeUrls
 
     -- handle posts
@@ -68,29 +68,29 @@ main
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
             >>= saveSnapshot "posts"
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= baseTemplate
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
             >>= relativizeUrls
 
     -- handle static pages
     match (fromList staticPages) $ do
         route $ setExtension "html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions
-            >>= baseTemplate
+            >>= loadAndApplyTemplate "templates/base.html" defaultContext
             >>= relativizeUrls
 
     create ["404.html"] $ do
         route $ idRoute
         compile $ makeItem ""
             >>= loadAndApplyTemplate "templates/404.html" defaultContext
-            >>= baseTemplate
+            >>= loadAndApplyTemplate "templates/base.html" defaultContext
             >>= absoluteUrls siteRoot
 
     -- create index page
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
-            >>= loadAndApplyTemplate "templates/index.html" (indexCtx  tags)
-            >>= baseTemplate
+            >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx tags)
             >>= relativizeUrls
 
     -- create rss feed
@@ -106,12 +106,6 @@ main
             >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx tags)
     where
         staticPages = ["notice.md", "about.md"]
-
-
-baseTemplate :: Item String -> Compiler (Item String)
-baseTemplate
-    = loadAndApplyTemplate "templates/base.html" defaultContext
-
 
 absoluteUrls :: String -> Item String -> Compiler (Item String)
 absoluteUrls
@@ -143,20 +137,24 @@ nowField
 
 indexCtx :: Tags -> Context String
 indexCtx 
-    tags = constField "title" "HOME"
+    tags = defaultContext
+        <> constField "title" "HOME"
+        <> constField "keywords" siteKeywords
+        <> constField "description" siteDescription 
         <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
         <> modificationTimeField "mod" "%Y-%m-%d"
-        <> defaultContext
 
 
 postCtx :: Tags -> Context String
 postCtx 
-    tags = tagsField "tags" tags
+    tags = defaultContext
+        <> tagsField "tags" tags
+        <> (constField "keywords" $ tagList tags)
         <> dateField "date" "%B %d, %Y"
         <> dateField "created" "%Y-%m-%d"
         <> modificationTimeField "mod" "%Y-%m-%d"
         <> field "math" mathjax
-        <> defaultContext
+        
 
 config :: Configuration
 config 
@@ -183,7 +181,9 @@ mathjax
             otherwise -> ""
     where
       script = "<script type=\"text/javascript\" src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML\" />"
-        
+       
+tagList :: Tags -> String
+tagList tags = intercalate "," $ map fst $ tagsMap tags
 
 pandocOptions :: O.WriterOptions
 pandocOptions = defaultHakyllWriterOptions
