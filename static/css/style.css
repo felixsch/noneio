@@ -188,4 +188,16 @@ code {
 #content img {
     margin: 3px;
 }
+.gallery ul { 
+    list-style-type: none;
+}
+
+.gallery li { 
+    display: inline-block; 
+} 
+.gallery img { 
+    display: inline-block; 
+    width: 15em;
+    border-radius: 3px;
+}
 
