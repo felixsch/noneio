@@ -79,8 +79,12 @@ imagesField name gal idfs = listField name (constField "gallery" gal <> field "i
 
 
 galleryContext :: Galleries -> (String -> Snapshot) -> Context a
-galleryContext gal mkSnapshot = mconcat $ forM (M.assocs $ gaMap gal) $ \(name, _) ->
-    field name (\_ -> itemBody <$> loadSnapshot (gaMakeId gal name) (mkSnapshot name))
+galleryContext gal mkSnapshot = mconcat $ map createField $ M.assocs $ gaMap gal
+    where
+        createField (name,_) = field name (html name)
+        html n _ = itemBody <$> loadSnapshot (gaMakeId gal n) (mkSnapshot n)
+
+
 
 main :: IO ()
 main 
@@ -128,8 +132,8 @@ main
     match "draft/*.md" $ do
         route $ setExtension ".html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions   
-            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
+            >>= loadAndApplyTemplate "templates/post.html" (postCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx galleries tags)
             >>= relativizeUrls
 
     -- handle posts
@@ -137,8 +141,8 @@ main
         route $ setExtension ".html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
             >>= saveSnapshot "posts"
-            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
+            >>= loadAndApplyTemplate "templates/post.html" (postCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx galleries tags)
             >>= relativizeUrls
 
     -- handle static pages
@@ -159,8 +163,8 @@ main
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
-            >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/index.html" (indexCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx galleries tags)
             >>= relativizeUrls
 
     -- create rss feed
@@ -173,36 +177,37 @@ main
     create ["sitemap.xml"] $ do
         route idRoute
         compile $ makeItem ""
-            >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx tags)
+            >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx galleries tags)
     where
         staticPages = ["notice.md", "about.md"]
 
 
-sitemapCtx :: Tags -> Context String
+sitemapCtx :: Galleries -> Tags -> Context String
 sitemapCtx
-    tags = defaultContext
-    <> listField "posts" (postCtx tags) (recentFirst =<< loadAll "posts/*.md")
+    gal tags = defaultContext
+    <> listField "posts" (postCtx gal tags) (recentFirst =<< loadAll "posts/*.md")
     <> nowField "created" "%Y-%m-%d"
 
 
-indexCtx :: Tags -> Context String
+indexCtx :: Galleries -> Tags -> Context String
 indexCtx 
-    tags = defaultContext
+    gal tags = defaultContext
         <> constField "title" "HOME"
         <> constField "keywords" siteKeywords
         <> constField "description" siteDescription 
-        <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
+        <> listField "posts" (postCtx gal tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
         <> modificationTimeField "mod" "%Y-%m-%d"
 
 
-postCtx :: Tags -> Context String
+postCtx :: Galleries -> Tags -> Context String
 postCtx 
-    tags = defaultContext
+    gal tags = defaultContext
         <> tagsField "tags" tags
         <> (constField "keywords" $ tagList tags)
         <> dateField "date" "%B %d, %Y"
         <> dateField "created" "%Y-%m-%d"
         <> modificationTimeField "mod" "%Y-%m-%d"
+        <> galleryContext gal ("gallery_" ++)
        
 
 config :: Configuration
