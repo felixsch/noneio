@@ -12,6 +12,7 @@ import Control.Monad
 
 import Data.Monoid
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 import Hakyll
 
@@ -32,7 +33,7 @@ buildGalleries pattern makeId = makeGal =<< getMatches glob
             glob        = fromGlob pattern
             parseAll    = map (parseIdentifier pattern)
             makeMap     = M.fromListWith (++)
-            makeGal mat = return $ Galleries (makeMap $ parseAll mat) makeId glob (PatternDependency glob mat)
+            makeGal mat = return $ Galleries (makeMap $ parseAll mat) makeId glob (PatternDependency glob $ S.fromList mat)
 
 parseIdentifier :: String -> Identifier -> (String, [Identifier])
 parseIdentifier p s = (name name', [s])
