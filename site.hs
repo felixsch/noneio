@@ -1,90 +1,25 @@
 {-# LANGUAGE OverloadedStrings  #-}
 
-import Control.Monad
 import Control.Applicative
 
 import System.Locale (defaultTimeLocale)
-
-
 
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Data.List (isPrefixOf, intercalate)
-import qualified Data.Map as M
-import qualified Data.Set as S
 
 import qualified Text.Pandoc.Options as O
 import Text.Highlighting.Kate.Styles (pygments)
 
-import Debug.Trace
 
 import Hakyll
+import Hakyll.Web.Galleries
 
 siteRoot = "http://none.io"
 siteKeywords = "Programming, Haskell, C++, Felix, Schnizlein, Personal, Blog, Vegan, Food"
 siteDescription = "Personal blog of Felix. Writing what ever comes to mind. Mainly about Haskell and other programming languages. But also about music, politics and cooking vegan food."
-
-data Galleries = Galleries
-  { gaMap :: M.Map String [Identifier]
-  , gaMakeId :: String -> Identifier
-  , gaPattern :: Pattern
-  , gaDependency :: Dependency
-  }
-
-
-instance Show Galleries where
-    show x = show $ gaMap x
-
-
-getImages :: String -> Galleries -> Maybe [Identifier]
-getImages g = M.lookup g . gaMap
-
-
-
-
-buildGalleries :: MonadMetadata m => String -> (String -> Identifier) -> m Galleries
-buildGalleries pattern makeId = makeGal =<< getMatches glob
-        where
-            glob        = fromGlob pattern
-            parseAll    = map (parseIdentifier pattern)
-            makeMap     = M.fromListWith (++)
-            makeGal mat = return $ Galleries (makeMap $ parseAll mat) makeId glob (PatternDependency glob mat)
-
-parseIdentifier :: String -> Identifier -> (String, [Identifier])
-parseIdentifier p s = (name name', [s])
-    where
-        name [] = "default"
-        name x  = init x
-        name'   = removeFileName $ removePath $ toFilePath s
-
-        path    = takeWhile (/= '*') p
-        removePath = drop (length path)
-        removeFileName   = reverse . dropWhile (/= '/') . reverse
-
-
-galleriesRules :: Galleries -> (String -> [Identifier] -> Pattern -> Rules ()) -> Rules ()
-galleriesRules gal rule = imageDeps >> (forM_ (M.assocs $ gaMap gal) $ \(name, identifiers) ->
-    rulesExtraDependencies [gaDependency gal] $
-        create [gaMakeId gal name] $ rule name identifiers (fromList identifiers))
-    where
-      imageDeps = rulesExtraDependencies [gaDependency gal] $ 
-        match (gaPattern gal) $ do
-            route idRoute
-            compile copyFileCompiler
-
-imagesField :: String -> String -> [Identifier] -> Context a
-imagesField name gal idfs = listField name (constField "gallery" gal <> field "image" (return . itemBody)) (mapM (makeItem . toUrl . toFilePath) idfs)
-
-
-galleryContext :: Galleries -> (String -> Snapshot) -> Context a
-galleryContext gal mkSnapshot = mconcat $ map createField $ M.assocs $ gaMap gal
-    where
-        createField (name,_) = field name (html name)
-        html n _ = itemBody <$> loadSnapshot (gaMakeId gal n) (mkSnapshot n)
-
-
 
 main :: IO ()
 main 
@@ -92,11 +27,12 @@ main
 
     tags <- buildTags "posts/*.md" $ fromCapture "tags/*.html"
     galleries <- buildGalleries "gal/**" $ fromCapture "gallery/*.html"
-    _ <- preprocess (print galleries)
 
     galleriesRules galleries $ \name images pattern -> do
+        let ctx =  imagesField "images" name images 
+                <> defaultContext 
+                <> constField "gal" name
 
-        let ctx = imagesField "images" name images <> defaultContext <> constField "gal" name
         route idRoute
         compile $ makeItem name
             >>= loadAndApplyTemplate "templates/gallery.html" ctx
@@ -132,8 +68,9 @@ main
     match "draft/*.md" $ do
         route $ setExtension ".html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions   
-            >>= loadAndApplyTemplate "templates/post.html" (postCtx galleries tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
+            >>= applyAsTemplate (galleriesContext galleries ("gallery_" ++))
             >>= relativizeUrls
 
     -- handle posts
@@ -141,8 +78,9 @@ main
         route $ setExtension ".html"
         compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions 
             >>= saveSnapshot "posts"
-            >>= loadAndApplyTemplate "templates/post.html" (postCtx galleries tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
+            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
+            >>= applyAsTemplate (galleriesContext galleries ("gallery_" ++))
             >>= relativizeUrls
 
     -- handle static pages
@@ -163,8 +101,8 @@ main
     create ["index.html"] $ do
         route idRoute
         compile $ makeItem "" 
-            >>= loadAndApplyTemplate "templates/index.html" (indexCtx galleries tags)
-            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx tags)
             >>= relativizeUrls
 
     -- create rss feed
@@ -177,37 +115,33 @@ main
     create ["sitemap.xml"] $ do
         route idRoute
         compile $ makeItem ""
-            >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx galleries tags)
+            >>= loadAndApplyTemplate "templates/sitemap.xml" (sitemapCtx tags)
     where
         staticPages = ["notice.md", "about.md"]
 
 
-sitemapCtx :: Galleries -> Tags -> Context String
-sitemapCtx
-    gal tags = defaultContext
-    <> listField "posts" (postCtx gal tags) (recentFirst =<< loadAll "posts/*.md")
+sitemapCtx :: Tags -> Context String
+sitemapCtx tags = defaultContext
+    <> listField "posts" (postCtx tags) (recentFirst =<< loadAll "posts/*.md")
     <> nowField "created" "%Y-%m-%d"
 
 
-indexCtx :: Galleries -> Tags -> Context String
-indexCtx 
-    gal tags = defaultContext
+indexCtx :: Tags -> Context String
+indexCtx tags = defaultContext
         <> constField "title" "HOME"
         <> constField "keywords" siteKeywords
         <> constField "description" siteDescription 
-        <> listField "posts" (postCtx gal tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
+        <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
         <> modificationTimeField "mod" "%Y-%m-%d"
 
 
-postCtx :: Galleries -> Tags -> Context String
-postCtx 
-    gal tags = defaultContext
+postCtx :: Tags -> Context String
+postCtx tags = defaultContext
         <> tagsField "tags" tags
         <> (constField "keywords" $ tagList tags)
         <> dateField "date" "%B %d, %Y"
         <> dateField "created" "%Y-%m-%d"
         <> modificationTimeField "mod" "%Y-%m-%d"
-        <> galleryContext gal ("gallery_" ++)
        
 
 config :: Configuration
