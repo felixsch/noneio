@@ -41,7 +41,7 @@ receive :: IO Message
 receive = readLn
 
 main :: IO ()
-main = send $ encrypt 3 "Hello world"
+main = send $$ encrypt 3 "Hello world"
 ```
 
 As you can see in this example data is "encrypted" and "sent" to `stdout`. This is just fine.
@@ -71,19 +71,19 @@ julius op n (x:xs) = letter x : julius op n xs
         letter = chr . (`op` n) . ord
 
 encrypt :: Int -> Message Cleartext -> Message Encrypted
-encrypt n (Message m) = Message $ julius (+) n m
+encrypt n (Message m) = Message $$ julius (+) n m
 
 decrypt :: Int -> Message Encrypted -> Message Cleartext
-decrypt n (Message m) = Message $ julius (-) n m
+decrypt n (Message m) = Message $$ julius (-) n m
 
 send :: Message Encrypted -> IO ()
 send (Message m) = putStrLn m
 
 receive :: IO (Message Encrypted)
-receive = Message <$> readLn
+receive = Message <$$> readLn
 
 main :: IO ()
-main = send $ encrypt 7 $ newMessage "Hello Haskell"
+main = send $$ encrypt 7 $$ newMessage "Hello Haskell"
 ```
 
 With phantom types it is not possible to send a cleartext message to `stdout`.
@@ -123,19 +123,19 @@ julius op n (x:xs) = letter x : julius op n xs
         letter = chr . (`op` n) . ord
 
 encrypt :: Int -> Message Cleartext -> Message Encrypted
-encrypt n (CleartextMessage m) = EncryptedMessage $ julius (+) n m
+encrypt n (CleartextMessage m) = EncryptedMessage $$ julius (+) n m
 
 decrypt :: Int -> Message Encrypted -> Message Cleartext
-decrypt n (EncryptedMessage m) = CleartextMessage $ julius (-) n m
+decrypt n (EncryptedMessage m) = CleartextMessage $$ julius (-) n m
 
 send :: Message Encrypted -> IO ()
 send (EncryptedMessage m) = putStrLn m
 
 receive :: IO (Message Encrypted)
-receive = EncryptedMessage <$> readLn
+receive = EncryptedMessage <$$> readLn
 
 main :: IO ()
-main = send $ encrypt 7 $ newMessage "Hello Haskell"
+main = send $$ encrypt 7 $$ newMessage "Hello Haskell"
 ```
 
 

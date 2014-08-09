@@ -31,7 +31,7 @@ sink :: Sink String IO ()
 sink = CL.mapM putStrLn
 
 main :: IO ()
-main = source $$ conduit =$= showMe =$ sink
+main = source $$$$ conduit =$$= showMe =$$ sink
 ~~~~
 
 ## Let's start
@@ -70,9 +70,9 @@ We now understand the basic monadic types of the _conduit_ package. But with onl
 ## Glue together?
 
 ~~~~ {.haskell}
-main = source $$ conduit =$= anotherConduit =$ sink
+main = source $$$$ conduit =$$= anotherConduit =$$ sink
 -- equivalent
-main = source $= conduit =$= anotherConduit $$ sink
+main = source $$= conduit =$$= anotherConduit $$$$ sink
 ~~~~
 
 What\'s currently missing are the pipes in _conduits_. Something is needed to glue a `Source`, some `Conduits` and a `Sink` together. Here Conduits introduces here
@@ -81,15 +81,15 @@ two new names. First the package provides some functions which tie two types tog
 
 __Fuses__:
 
-- `=$`  fuse a `Conduit` and `Sink` together and create a new `Sink`
+- `=$$`  fuse a `Conduit` and `Sink` together and create a new `Sink`
  
-- `$=`  fuse a `Source` and `Conduit` together and create a new `Source`
+- `$$=`  fuse a `Source` and `Conduit` together and create a new `Source`
  
-- `=$=` combines two `Conduits` and creates a new `Conduit`
+- `=$$=` combines two `Conduits` and creates a new `Conduit`
 
 __Connector__:
 
-- `$$` connects a `Source` and a `Sink`
+- `$$$$` connects a `Source` and a `Sink`
 
 _Just remember: You can look up the full reference at [hackage](http://hackage.haskell.org/package/conduit/docs/Data-Conduit.html)_
 
@@ -154,7 +154,7 @@ sink = do
       _          -> return ()
       
 main :: IO ()
-main = source $= conduit $$ sink
+main = source $$= conduit $$$$ sink
 ~~~~
 Output:
 
@@ -232,7 +232,7 @@ With this generalisations it\'s possible to combine for example `Sources` and `C
 
 ~~~~ {.haskell .numberLines}
 doubleTime :: Producer IO Int
-doubleTime = awaitForever $ \x -> CL.sourceList [x,x]
+doubleTime = awaitForever $$ \x -> CL.sourceList [x,x]
 
 takeTwice :: Consumer Int IO [Int]
 takeTwice = CL.take 2
@@ -265,15 +265,15 @@ Using `addCleanup` to close a file handle:
 
 cleanupSource :: Source IO Char
 cleanupSource = do
-    hdl <- liftIO $ openFile "foobar.txt" ReadMode
+    hdl <- liftIO $$ openFile "foobar.txt" ReadMode
     addCleanup cleanupCb (readChar hdl)
     where
       cleanupCb    = hClose handle
       readChar hdl = do
-        isEof <- liftIO $ hIsEOF hdl
+        isEof <- liftIO $$ hIsEOF hdl
         if isEof
             return () -- we're done now
-            else (liftIO $ hGetChar hdl >>= yield) >> readChar hdl
+            else (liftIO $$ hGetChar hdl >>= yield) >> readChar hdl
 ~~~~
 
 `addCleanup` is nice and easy to use. But there is still a major problem. What happens if one of the handle functions (like `openFile`) throws an exception? To overcome this there is `bracketP` on the one side and a complete package `ResourceT` on the other side. 
@@ -281,7 +281,7 @@ If you are more interested in `ResourceT` take a look at [resourcet](https://hac
 
 ## Resumable Conduits
 
-In some cases it would be nice to pause a data procession and resume it later. Thats why conduits implements `ResumableSource`. Using the special functions (which looks similar to the normal one) it is possible to build resumable conduit systems like normal ones. The `$$+` operator generates a `ResumableSource` out of a `Source` and a `Sink`. After other operations the processing can be continued with `$$++`. At the end, to avoid delayed cleanup, call `$$+-` which triggers _finalization_. For the sake of completeness there is also a generalization of `ResumableSource` which is called `ResumableConduit` but we will not looke into this generalisation.
+In some cases it would be nice to pause a data procession and resume it later. Thats why conduits implements `ResumableSource`. Using the special functions (which looks similar to the normal one) it is possible to build resumable conduit systems like normal ones. The `$$$$+` operator generates a `ResumableSource` out of a `Source` and a `Sink`. After other operations the processing can be continued with `$$$$++`. At the end, to avoid delayed cleanup, call `$$$$+-` which triggers _finalization_. For the sake of completeness there is also a generalization of `ResumableSource` which is called `ResumableConduit` but we will not looke into this generalisation.
 
 
 
