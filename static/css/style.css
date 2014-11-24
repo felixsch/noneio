@@ -179,7 +179,11 @@ img {
 
 
 pre {
+    
+    border: 1px solid #aaa;
+    border-radius: 2px;
     background-color: rgba(228, 228, 228, 1);
+    padding: 10px;
 }
 code {
     background-color: rgba(228, 228, 228, 1);
