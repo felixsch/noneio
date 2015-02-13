@@ -4,7 +4,7 @@ description: Howto setup mutt properly using nativ imap, msmpt, gpg and password
 tags: Application Linux Mutt
 ---
 
-__If you ever tried to setup _mutt_ you might encounter problems with all the configuration stuff which is needed to setup _mutt_ properly. For a long time I've been searching a solution for viewing emails remotely. That's why I give mutt another chance, to prove its greatness.__
+__If you ever tried to setup _mutt_? You might encountered problems with all the configuration stuff which is needed to setup _mutt_ properly. For a long time I've been searching a solution for viewing emails remotely. That's why I give mutt another chance, to prove its greatness.__
 
 
 ![](http://none.io/share/mutt.png)
