@@ -8,6 +8,7 @@ Lately I have come to the point where I had to ask myself: How is this kernel th
 
 __In this post I'm going to explain the basics of kernel modules and how to hook the sys_newuname function without the use of the sys_call_table__
 
+<br/>
 
 ###Prepare the development environment
 
@@ -23,6 +24,7 @@ Things you should install on the virtualised system:
 > - gcc _(for compiling the kernel)_
 > - nasm _(To generate shellcode)_
 
+<br/>
 
 ###Upon a time long time, there was a kernel module
 
@@ -31,13 +33,13 @@ The general way of extending the kernel is by writing a kernel module. Setup a `
 ```
 obj-m += mantis.o
 mantis-objs := module.o hijack.o
-KERNELPATH := $(shell uname -r)
+KERNELPATH := $$(shell uname -r)
 
 all:
-	make -C /lib/modules/${KERNELPATH}/build M=$(PWD) modules
+	make -C /lib/modules/$${KERNELPATH}/build M=$$(PWD) modules
 
 clean:
-	make -C /lib/modules/${KERNELPATH}/build M=$(PWD) clean
+	make -C /lib/modules/$${KERNELPATH}/build M=$$(PWD) clean
 ```
 
 Easy, right? This will build a module against your running kernel
@@ -47,7 +49,7 @@ Easy, right? This will build a module against your running kernel
 
 Every kernel module needs to implement two functions, a module init function and a module release function. A module looks like:
 
-```c
+```{.c .numberLines}
 #include <linux/module.h>
 #include <linux/init.h>
 
@@ -94,9 +96,9 @@ One thing about `printk` as you already thought, it behaves like `printf` with o
 All possible levels are defined here: [kern_levels.h](http://lxr.free-electrons.com/source/include/linux/kern_levels.h)
 
 > __Hint:__ You can change the log level, which is printed to dmesg dynamically by:
+  `echo "<loglevel num>" > /proc/sys/kernel/printk`
 
-> `echo "<loglevel num>" > /proc/sys/kernel/printk`
-
+<br/>
 
 ### Ready to juggle!
 
@@ -106,15 +108,15 @@ Now let's hook the uname of the virtualised system.
 
 The kernel holds every function which is defined in kernel space (sure the kernel needs to know where to call any function). You can look up the memory space by typing:
 
-    $ cat /proc/kallsyms
+    $$ cat /proc/kallsyms
     
 or if this feature is disabled (CONFIG_KALLSYMS not set)
 
-    $ cat /boot/System.map-$(uname -r)
+    $$ cat /boot/System.map-$$(uname -r)
 
 Every loaded function is listed here. The function we seek `sys_uname` as well
 
-    $ cat /proc/kallsyms | grep sys_newuname
+    $$ cat /proc/kallsyms | grep sys_newuname
     3680:ffffffff820acf80 T sys_newuname
     
 
@@ -126,7 +128,7 @@ But searching the address manually is pedestrian. Fortunately, there is API in t
 
 Now we are going to obtain the address:
 
-```c
+```{.c .numberLines}
 #include <linux/kallsyms.h>
 
 void *sys_newuname = NULL;
@@ -163,7 +165,9 @@ This means:
  
 First the function we want to overwrite has the definition:
 
-    asmlinkage long sys_newuname(struct new_utsname __user *name);
+```{.c}
+asmlinkage long sys_newuname(struct new_utsname __user *name);
+```
     
 Our hook function, therefore should look the same. (`struct new_utsname` is defined in `linux/utsname.h`)
 
@@ -174,22 +178,22 @@ We need shellcode which jumps to a _absolute_ address.
 
 In assembler this looks fairly easy:
 
-```asm
+```{.asm}
   mov rax, 0x01234567890123456
   jmp rax
 ```
 
 We compile this to an object file and disassemble the generated code
 
-    $ nasm jump.asm -f elf64
-    $ objdump -d jump.o
+    $$ nasm jump.asm -f elf64
+    $$ objdump -d jump.o
     
     test.o:     file format elf64-x86-64
 
     Disassembly of section .text:
 
     0000000000000000 <.text>:
-       0:	48 b8 56 34 12 89 67 	movabs $0x123456789123456,%rax
+       0:	48 b8 56 34 12 89 67 	movabs $$0x123456789123456,%rax
        7:	45 23 01 
        a:	ff e0                	jmpq   *%rax
 
@@ -202,7 +206,7 @@ I just replaced the 0x0123456789123456 with zeros. It shows, that the first two 
 
 This means we need to insert our 8 byte wide address (a `unsigned long`) after 2 bytes. To hook and unhook dynamically the original instruction are saved too. 
 
-```c
+```{.c .numberLines}
 #define JUMP_CODE "\x48\xb8\x00\x00\x00\x00\x00\x00\x00\x00\xff\xe0"
 #define JUMP_SIZE 12
 #define JUMP_OFFSET 2 // we want to insert the address after 2 bytes
@@ -236,7 +240,7 @@ To disable _write protection_ the __16th__ bit of the `x86` control register nee
 
 To make sure no other process interferes preemption is disabled.
 
-```
+```{.c .numberLines}
 #include <linux/preempt.h>
 
 inline unsigned long disable_wp(void)
@@ -262,7 +266,7 @@ inline void restore_wp(unsigned long cr0)
 The last thing to write a `hook` and `unhook` function.
 Here is the complete code:
 
-```
+```{.c .lineNumbers}
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kallsyms.h>
@@ -402,16 +406,17 @@ module_init(mymodule_init);
 module_exit(mymodule_exit);
 
 ```
+<br/>
 
 > __Note:__ This is a quick sketch. Encapsulate the data in a own type (e.g. ksym_hook_t) would be really nice!
 
 And hooked!
 
-    $ uname
+    $$ uname
     Linux
-    $ make
-    $ insmod mymodule.ko
-    $ uname
+    $$ make
+    $$ insmod mymodule.ko
+    $$ uname
     hooked Linux!!
 
 

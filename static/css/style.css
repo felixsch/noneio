@@ -178,15 +178,30 @@ img {
 }
 
 
-pre {
-    
+pre { 
+  margin: 0;
+  padding: 10px 0 10px 5px;
+  border-width: 1px 10px 1px 1px;
+  border-style: solid;
+  border-color: #aaa;
+  border-radius: 3px;
+  background: #e4e4e4;
+}
+
+pre code {
+  background-color: #e4e4e4;
+  border: 0;
+  padding: 0;
+
+
+}
+
+code {
     border: 1px solid #aaa;
     border-radius: 2px;
     background-color: rgba(228, 228, 228, 1);
-    padding: 10px;
-}
-code {
-    background-color: rgba(228, 228, 228, 1);
+    padding: 2px;
+
 }
 
 #content img {
@@ -203,5 +218,23 @@ code {
     display: inline-block; 
     width: 15em;
     border-radius: 3px;
+}
+
+blockquote {
+  margin: 0;
+  padding: 1px 5px 1px 20px;
+  border-width: 1px 1px 1px 10px;
+  border-style: solid;
+  border-color: #1a1a1a; 
+  border-radius: 3px;
+}
+
+.notfound {
+  display: block;
+  margin: auto;
+  border-color: rgb(26, 26, 26);
+  border-style: solid;
+  border-width: 0px 30px;
+  border-radius: 5px;
 }
 
