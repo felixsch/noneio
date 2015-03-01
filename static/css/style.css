@@ -229,7 +229,7 @@ blockquote {
   border-radius: 3px;
 }
 
-.notfound {
+#notfound {
   display: block;
   margin: auto;
   border-color: rgb(26, 26, 26);
