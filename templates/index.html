@@ -9,4 +9,13 @@ $for(posts)$
     <p>$date$ under $tags$</p>
 </div>
 $endfor$
+<ul class="pagination">
+$if(previousPageUrl)$
+<li class="page-prev"><a href="$previousPageUrl$">show newer posts</a></li>
+$endif$
+
+$if(nextPageUrl)$
+<li class="page-next"><a href="$nextPageUrl$">show older posts</a></li>
+$endif$
+</ul>
 

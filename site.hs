@@ -15,42 +15,27 @@ import Text.Highlighting.Kate.Styles (pygments)
 
 
 import Hakyll
-import Hakyll.Web.Galleries
+import Hakyll.Web.Paginate
 
 siteRoot = "http://none.io"
 siteKeywords = "Programming, Haskell, C++, Felix, Schnizlein, Personal, Blog, Vegan, Food"
 siteDescription = "Personal blog of Felix. Writing what ever comes to mind. Mainly about Haskell and other programming languages. But also about music, politics and cooking vegan food."
 
+
 main :: IO ()
-main 
-    = hakyllWith config $ do
+main = hakyllWith config $ do
 
     tags <- buildTags "posts/*.md" $ fromCapture "tags/*.html"
-    galleries <- buildGalleries "gal/**" $ fromCapture "gallery/*.html"
-
-    galleriesRules galleries $ \name images pattern -> do
-        let ctx =  imagesField "images" name images 
-                <> defaultContext 
-                <> constField "gal" name
-
-        route idRoute
-        compile $ makeItem name
-            >>= loadAndApplyTemplate "templates/gallery.html" ctx
-            >>= saveSnapshot ("gallery_" ++ name)
-            >>= loadAndApplyTemplate "templates/base.html" defaultContext
-            >>= relativizeUrls
+    pages <- buildPages "posts/*.md"
 
     -- read templates
     match "templates/*" $ compile templateCompiler
 
     -- copy static images
     match (  "static/**"
-        .||. "robots.txt") $ do
-        route idRoute
-        compile copyFileCompiler
-
-    -- handle images
-    match "img/*" $ do
+        .||. "robots.txt"
+        .||. "img/*"
+        .||. "static/js/*.js") $ do
         route idRoute
         compile copyFileCompiler
 
@@ -59,20 +44,6 @@ main
         route idRoute
         compile compressCssCompiler
 
-    -- handle js
-    match "static/js/*.js" $ do
-        route idRoute
-        compile copyFileCompiler
-
-    -- handle unpublished posts
-    match "draft/*.md" $ do
-        route $ setExtension ".html"
-        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocOptions   
-            >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
-            >>= applyAsTemplate (galleriesContext galleries ("gallery_" ++))
-            >>= relativizeUrls
-
     -- handle posts
     match "posts/*.md" $ do
         route $ setExtension ".html"
@@ -80,7 +51,6 @@ main
             >>= saveSnapshot "posts"
             >>= loadAndApplyTemplate "templates/post.html" (postCtx tags)
             >>= loadAndApplyTemplate "templates/base.html" (postCtx tags)
-            >>= applyAsTemplate (galleriesContext galleries ("gallery_" ++))
             >>= relativizeUrls
 
     -- handle static pages
@@ -90,19 +60,21 @@ main
             >>= loadAndApplyTemplate "templates/base.html" defaultContext
             >>= relativizeUrls
 
+
+    -- 404.html uses absolute urls
     create ["404.html"] $ do
-        route $ idRoute
+        route idRoute
         compile $ makeItem ""
             >>= loadAndApplyTemplate "templates/404.html" defaultContext
             >>= loadAndApplyTemplate "templates/base.html" defaultContext
             >>= absoluteUrls siteRoot
 
-    -- create index page
-    create ["index.html"] $ do
-        route idRoute
+
+    paginateRules pages $ \index pattern -> do
+        route $ setExtension "html"
         compile $ makeItem "" 
-            >>= loadAndApplyTemplate "templates/index.html" (indexCtx tags)
-            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx tags)
+            >>= loadAndApplyTemplate "templates/index.html" (indexCtx index pages tags)
+            >>= loadAndApplyTemplate "templates/base.html"  (indexCtx index pages tags)
             >>= relativizeUrls
 
     -- create rss feed
@@ -126,13 +98,17 @@ sitemapCtx tags = defaultContext
     <> nowField "created" "%Y-%m-%d"
 
 
-indexCtx :: Tags -> Context String
-indexCtx tags = defaultContext
+indexCtx :: PageNumber -> Paginate -> Tags -> Context String
+indexCtx i pages tags = defaultContext
         <> constField "title" "HOME"
         <> constField "keywords" siteKeywords
         <> constField "description" siteDescription 
-        <> listField "posts" (postCtx tags) (take 5 <$> (recentFirst =<< loadAll "posts/*.md"))
+        <> listField "posts" (postCtx tags) (takeFromTo start end <$> (recentFirst =<< loadAll "posts/*.md"))
         <> modificationTimeField "mod" "%Y-%m-%d"
+        <> paginateContext pages i
+  where
+        start = 5 * (i -1)
+        end   = 5 * i
 
 
 postCtx :: Tags -> Context String
@@ -172,9 +148,16 @@ tagList tags = intercalate "," $ map fst $ tagsMap tags
 
 
 absoluteUrls :: String -> Item String -> Compiler (Item String)
-absoluteUrls
-    root = return . fmap (relativizeUrlsWith root)
+absoluteUrls root = return . fmap (relativizeUrlsWith root)
 
+buildPages :: (MonadMetadata m) => Pattern -> m Paginate
+buildPages pattern = buildPaginateWith (return . paginateEvery 5) pattern $ \index ->
+    if index == 1 
+       then fromFilePath "index.html"
+       else fromFilePath $ "index/p/" ++ show index ++ ".html"
+
+takeFromTo :: Int -> Int -> [a] -> [a]
+takeFromTo start end = drop start . take end
 
 pandocOptions :: O.WriterOptions
 pandocOptions = defaultHakyllWriterOptions

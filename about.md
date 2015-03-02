@@ -1,17 +1,37 @@
-# About
+<img style="float: left; padding: 20px;" src="http://none.io/share/FelixSchnizlein.png">
+<span style="font-size: 6em;">About</span>
 
-<img src="http://www.gravatar.com/avatar/ae9577216e6eabf94c6354949e528a9b?s=145" align="left">
-My name is Felix Schnizlein, on the internet mostly "felixsch". I'm a hobby developer with an obsession for all kind of programming languages. Currently learning Haskell, because this programming language solves a lot problems which sadly still exists in most other languages. Also thinking in a functional way had a great impact on my way to deal with programming problems.
+Hi, my name is Felix Schnizlein (online mostly __felixsch__). I'm a hobby programmer and Linux enthusiast.
 
-In my free time I play bass guitar and love cooking vegan food.
+[http://none.io](http://none.io) is about all the things that comes to my mind. Currently my blog is about Linux and programming. But this might change!
 
-This blog features everything what comes to my mind. From article on development topics or just about the vegan bakery I made yesterday.
+Currently I live at Ratisbona and study _technische Informatik_ (CS) at local college (Ost Bayerische Hochschule).
 
-none.io is written in Haskell using the awesome static generator package [Hakyll](http://hackage.haskell.org/package/hakyll). If you are interested in the source checkout the [github repository](https://github.com/felixsch/noneio).
+Besides studying, I work as a student employee as a PHP developer.
 
-If you want to contact me:
+<br/>
+<br/>
 
-* send me a email to: [felix @ none.io] 
-* pm me on twitter: [https://twitter.com/_joogi](https://twitter.com/_joogi)
-* query me on irc.freenode.net or join #fde@irc.freenode.net
+###Facts about me:
+<div style="line-height: 2.0em">
+- I love to cook vegan food, but I'm not a vegan
+- I'm a lefty, but I play a righty bass guitar
+- I'm a lefty, but I'm trying to play the righty drums the lefty way
+- I was born in Bavaria, but I don't speak Bavarian
+- I love functional programming, but not what `javascript` means by it
+- I'm a Linux enthusiast, but I don't hate Microsoft
+- I'm a white European man, but I know about my privileges and try to fight racism, sexism, .. in my daily life.
+- I love cycling, but not as competition.
+</div>
 
+
+
+### You want contact me? No problem!
+
+> Send me an email: felix&#8291;&#8291;&#8291;<span>@</span>&#8291;n&#8291;&#8291;o&#8291;n&#8291;&#8291;e.&#8291;io <br/> Send me a message at twitter: [https://twitter.com/felixsch_](https://twitter.com/felixsch_) <br/> Chat with me on IRC: #fde@irc.freenode.net
+
+### About none.io
+
+[http://none.io](http://none.io) is written in Haskell using the static html generator library [Hakyll](http://hackage.haskell.org/package/hakyll)
+
+The source is available at [github.com](http://github.com/felixsch/noneio).
