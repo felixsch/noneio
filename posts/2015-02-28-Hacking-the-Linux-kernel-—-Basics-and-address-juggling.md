@@ -31,15 +31,15 @@ Things you should install on the virtualised system:
 The general way of extending the kernel is by writing a kernel module. Setup a `Makefile` which builds module against any installed kernel is pretty easy:
 
 ```
-obj-m += mantis.o
-mantis-objs := module.o hijack.o
-KERNELPATH := $$(shell uname -r)
+obj-m += mymodule.o
+mymodule-objs := mymodule.o
+KERNELPATH := $(shell uname -r)
 
 all:
-	make -C /lib/modules/$${KERNELPATH}/build M=$$(PWD) modules
+	make -C /lib/modules/${KERNELPATH}/build M=$(PWD) modules
 
 clean:
-	make -C /lib/modules/$${KERNELPATH}/build M=$$(PWD) clean
+	make -C /lib/modules/${KERNELPATH}/build M=$(PWD) clean
 ```
 
 Easy, right? This will build a module against your running kernel
@@ -334,7 +334,7 @@ void unhook(void)
   
   memcpy(sys_newuname, (void *)original, JUMP_SIZE);
   
-  retstore_wp(cr0);
+  restore_wp(cr0);
 }
 
 
@@ -346,7 +346,7 @@ asmlinkage long hooked_sys_newuname(struct new_utsname __user *name)
   long ret;
   long (*real_newuname)(struct new_utsname __user *);
   
-  real_uname = (long (*)(struct new_utsname __user *)sys_newuname;
+  real_newuname = (long (*)(struct new_utsname __user *))sys_newuname;
   
   unhook();
   ret = real_newuname(name);
@@ -361,7 +361,7 @@ asmlinkage long hooked_sys_newuname(struct new_utsname __user *name)
 /**
  * initialize data structures
  */
-void init_hook()
+void init_hook(void)
 {
 
   memcpy(jump, JUMP_CODE, JUMP_SIZE);
@@ -380,13 +380,13 @@ static int __init mymodule_init(void)
 
   sys_newuname = (void*)kallsyms_lookup_name("sys_newuname");
   
-  if (!sys_uname) {
+  if (!sys_newuname) {
      printk(KERN_DEBUG "Could not load address of sys_newuname\n");
      
      return -1;
   }
   
-  hook_init();
+  init_hook();
   hook();
   
   return 0;
@@ -412,11 +412,11 @@ module_exit(mymodule_exit);
 
 And hooked!
 
-    $$ uname
+    $ uname
     Linux
-    $$ make
-    $$ insmod mymodule.ko
-    $$ uname
+    $ make
+    $ insmod mymodule.ko
+    $ uname
     hooked Linux!!
 
 
